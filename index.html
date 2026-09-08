@@ -1,0 +1,719 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Копи центр | Копировальный центр в Мурино</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #a4eb34;
+            --primary-glow: rgba(164, 235, 52, 0.4);
+            --bg-dark: #0a0c10;
+            --panel-bg: rgba(18, 22, 31, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #webgl-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Оверлей */
+        .app-overlay {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px 32px;
+            pointer-events: none;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Стеклянные карточки */
+        .glass-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        /* Шапка */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .brand-text h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .brand-text span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Основная сетка контента */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr 380px;
+            align-items: center;
+            gap: 20px;
+            height: calc(100vh - 160px);
+        }
+
+        /* Левая панель (Инфо) */
+        .info-panel {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .info-panel h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            line-height: 1.2;
+        }
+
+        .info-panel p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 6px 0;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .address-box {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border-left: 3px solid var(--primary);
+            font-size: 0.85rem;
+        }
+
+        .btn-action {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 20px;
+            background: var(--primary);
+            color: #0b0f02;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(164, 235, 52, 0.6);
+            background: #b7fa43;
+        }
+
+        .btn-route {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid var(--border-glass);
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-route:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #fff;
+        }
+
+        /* Правая панель (Калькулятор) */
+        .calc-panel {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .calc-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .select-custom, .input-custom {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            color: #fff;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .select-custom:focus, .input-custom:focus {
+            border-color: var(--primary);
+        }
+
+        .price-display {
+            background: rgba(164, 235, 52, 0.08);
+            border: 1px dashed var(--primary);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .price-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* 3D Подсказка по центру */
+        .hint-3d {
+            justify-self: center;
+            align-self: end;
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Футер */
+        footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .messengers {
+            display: flex;
+            gap: 12px;
+        }
+
+        .social-link {
+            color: #fff;
+            text-decoration: none;
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border: 1px solid var(--border-glass);
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .social-link:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: #fff;
+        }
+
+        /* Адаптив */
+        @media (max-width: 1024px) {
+            body { overflow-y: auto; }
+            .app-overlay { height: auto; padding: 16px; }
+            .main-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+                margin: 20px 0;
+            }
+            #webgl-container { position: fixed; }
+            .hint-3d { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="webgl-container"></div>
+
+    <div class="app-overlay">
+        <header>
+            <div class="brand interactive">
+                <div class="brand-icon">K</div>
+                <div class="brand-text">
+                    <h1>Копи центр</h1>
+                    <span>Копировальный центр • Мурино</span>
+                </div>
+            </div>
+
+            <div class="glass-card status-pill interactive">
+                <div class="dot"></div>
+                <span>Открыто ежедневно 10:00–20:00</span>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <div class="glass-card info-panel interactive">
+                <div>
+                    <h2>Полиграфия и копировальные услуги</h2>
+                    <p>Оперативная печать, сканирование и подготовка документов в ЖК «Муринский Посад».</p>
+                </div>
+
+                <!-- Ремонт заменен на стандартные профильные полиграфические услуги -->
+                <div class="features">
+                    <div class="feature-item">📄 Печать & Копии А4/А3</div>
+                    <div class="feature-item">📸 Фото на документы</div>
+                    <div class="feature-item">🖨 Сканирование & OCR</div>
+                    <div class="feature-item">🛡 Ламинирование & Переплет</div>
+                </div>
+
+                <div class="address-box">
+                    <strong>📍 Адрес:</strong> Мурино, ул. Шоссе в Лаврики, 59 к1, этаж 1<br>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">(м. Девяткино ~ 18–20 мин пешком)</span>
+                </div>
+
+                <button class="btn-action" id="printDemoBtn">
+                    🖨 Протестировать печать
+                </button>
+
+                <!-- Прямая ссылка на профиль Яндекс Навигатора / Карт -->
+                <a href="https://yandex.ru/navi/org/kopi_tsentr/192573673627" target="_blank" class="btn-route">
+                    📍 Открыть в Яндекс Картах
+                </a>
+            </div>
+
+            <div class="hint-3d">
+                <span>🖱 Вращайте принтер мышью / жестом</span>
+            </div>
+
+            <div class="glass-card calc-panel interactive">
+                <div class="calc-title">
+                    <span>⚡️ Расчет стоимости</span>
+                    <span style="font-size: 0.8rem; color: var(--primary);">Онлайн</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Тип услуги</label>
+                    <select id="calcType" class="select-custom">
+                        <option value="10">Ч/Б печать (А4) — 10 ₽</option>
+                        <option value="35">Цветная печать (А4) — 35 ₽</option>
+                        <option value="60">Печать формата А3 — 60 ₽</option>
+                        <option value="20">Сканирование документа — 20 ₽</option>
+                        <option value="50">Ламинирование (А4) — 50 ₽</option>
+                        <option value="350">Фото на документы — 350 ₽</option>
+                        <option value="30">Печать фото 10x15 — 30 ₽</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Количество страниц / экземпляров</label>
+                    <input type="number" id="calcQty" class="input-custom" value="5" min="1" max="500">
+                </div>
+
+                <div class="price-display">
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;">Ориентировочная стоимость:</div>
+                    <div class="price-val" id="totalPrice">50 ₽</div>
+                </div>
+
+                <button class="btn-action" id="orderBtn" style="background: #25D366; color: #fff; box-shadow: 0 4px 20px rgba(37,211,102,0.3);">
+                    💬 Отправить файл в WhatsApp
+                </button>
+            </div>
+        </main>
+
+        <footer>
+            <div class="contacts-footer interactive">
+                <span>📞 Тел: <strong>+7 (911) 796-14-02</strong></span>
+            </div>
+
+            <div class="messengers interactive">
+                <a href="tel:+79117961402" class="social-link">Позвонить</a>
+                <a href="https://wa.me/79117961402" target="_blank" class="social-link">WhatsApp</a>
+                <a href="https://yandex.ru/navi/org/kopi_tsentr/192573673627" target="_blank" class="social-link">Яндекс Карты</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Инициализация Three.js
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0c10, 0.05);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 3, 7);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // OrbitControls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.1;
+        controls.minDistance = 3;
+        controls.maxDistance = 12;
+
+        // Освещение сцены
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(5, 10, 7);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        // Фирменная неоновая подсветка
+        const neonLight = new THREE.PointLight(0xa4eb34, 3, 10);
+        neonLight.position.set(0, 1.5, 1);
+        scene.add(neonLight);
+
+        // Стеклянный пол
+        const floorGeo = new THREE.PlaneGeometry(30, 30);
+        const floorMat = new THREE.MeshStandardMaterial({ 
+            color: 0x10141d, 
+            roughness: 0.2, 
+            metalness: 0.8 
+        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -1;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Сетка
+        const grid = new THREE.GridHelper(30, 30, 0xa4eb34, 0x1f2937);
+        grid.position.y = -0.99;
+        scene.add(grid);
+
+        // ==========================================
+        // 3D МОДЕЛЬ: МФУ / КОПИР
+        // ==========================================
+        const printerGroup = new THREE.Group();
+
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1e232d, roughness: 0.4, metalness: 0.5 });
+        const darkMat = new THREE.MeshStandardMaterial({ color: 0x0f1117, roughness: 0.6 });
+
+        // Основной корпус
+        const bodyGeo = new THREE.BoxGeometry(2.6, 1.4, 2.0);
+        const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        bodyMesh.position.y = 0.7;
+        bodyMesh.castShadow = true;
+        bodyMesh.receiveShadow = true;
+        printerGroup.add(bodyMesh);
+
+        // Крышка планшетного сканера
+        const scannerGeo = new THREE.BoxGeometry(2.6, 0.2, 2.0);
+        const scannerMesh = new THREE.Mesh(scannerGeo, bodyMat);
+        scannerMesh.position.set(0, 1.5, 0);
+        scannerMesh.castShadow = true;
+        printerGroup.add(scannerMesh);
+
+        // Стекло сканера
+        const glassGeo = new THREE.PlaneGeometry(2.2, 1.6);
+        const glassMat = new THREE.MeshPhysicalMaterial({
+            color: 0x00ffff,
+            transmission: 0.9,
+            opacity: 1,
+            transparent: true,
+            roughness: 0.1
+        });
+        const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+        glassMesh.rotation.x = -Math.PI / 2;
+        glassMesh.position.set(0, 1.41, 0);
+        printerGroup.add(glassMesh);
+
+        // Бегущая лампа сканирования
+        const scanBarGeo = new THREE.BoxGeometry(0.1, 0.05, 1.6);
+        const scanBarMat = new THREE.MeshBasicMaterial({ color: 0xa4eb34 });
+        const scanBar = new THREE.Mesh(scanBarGeo, scanBarMat);
+        scanBar.position.set(-0.9, 1.4, 0);
+        printerGroup.add(scanBar);
+
+        // Выходной лоток
+        const slotGeo = new THREE.BoxGeometry(1.8, 0.1, 0.4);
+        const slotMesh = new THREE.Mesh(slotGeo, darkMat);
+        slotMesh.position.set(0, 0.7, 0.95);
+        printerGroup.add(slotMesh);
+
+        // Панель управления
+        const panelGeo = new THREE.BoxGeometry(0.8, 0.4, 0.1);
+        const screenGeo = new THREE.BoxGeometry(0.6, 0.25, 0.02);
+        const screenMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+
+        const panelMesh = new THREE.Mesh(panelGeo, bodyMat);
+        panelMesh.position.set(0.8, 1.2, 1.05);
+        panelMesh.rotation.x = -Math.PI / 6;
+
+        const screenMesh = new THREE.Mesh(screenGeo, screenMat);
+        screenMesh.position.set(0, 0, 0.05);
+        panelMesh.add(screenMesh);
+        printerGroup.add(panelMesh);
+
+        // Вывеска
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0a0c10';
+        ctx.fillRect(0, 0, 512, 128);
+        ctx.font = 'bold 56px Space Grotesk, sans-serif';
+        ctx.fillStyle = '#a4eb34';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('КОПИ ЦЕНТР', 256, 64);
+
+        const signTexture = new THREE.CanvasTexture(canvas);
+        const signGeo = new THREE.PlaneGeometry(2.4, 0.6);
+        const signMat = new THREE.MeshBasicMaterial({ map: signTexture, side: THREE.DoubleSide });
+        const signMesh = new THREE.Mesh(signGeo, signMat);
+        signMesh.position.set(0, 2.4, 0);
+        printerGroup.add(signMesh);
+
+        scene.add(printerGroup);
+        printerGroup.position.y = -0.5;
+
+        // ==========================================
+        // ВЫЛЕТ ЛИСТОВ
+        // ==========================================
+        const printedSheets = [];
+        const sheetGeo = new THREE.PlaneGeometry(1.2, 1.6);
+        const sheetMat = new THREE.MeshStandardMaterial({ 
+            color: 0xffffff, 
+            roughness: 0.2, 
+            side: THREE.DoubleSide 
+        });
+
+        function spawnPrintJob() {
+            const sheet = new THREE.Mesh(sheetGeo, sheetMat);
+            sheet.rotation.x = -Math.PI / 2.2;
+            sheet.position.set(0, 0.2, 0.95);
+            sheet.castShadow = true;
+            
+            scene.add(sheet);
+            printedSheets.push({
+                mesh: sheet,
+                progress: 0,
+                speed: 0.02 + Math.random() * 0.01,
+                rotSpeed: (Math.random() - 0.5) * 0.02
+            });
+
+            neonLight.intensity = 8;
+            setTimeout(() => neonLight.intensity = 3, 300);
+        }
+
+        // Фоновые частицы
+        const particlesCount = 300;
+        const pGeo = new THREE.BufferGeometry();
+        const pPos = new Float32Array(particlesCount * 3);
+        for(let i = 0; i < particlesCount * 3; i++) {
+            pPos[i] = (Math.random() - 0.5) * 16;
+        }
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        const pMat = new THREE.PointsMaterial({ size: 0.04, color: 0xa4eb34, transparent: true, opacity: 0.4 });
+        const particles = new THREE.Points(pGeo, pMat);
+        scene.add(particles);
+
+        // ==========================================
+        // ЛОГИКА КАЛЬКУЛЯТОРА
+        // ==========================================
+        const calcType = document.getElementById('calcType');
+        const calcQty = document.getElementById('calcQty');
+        const totalPrice = document.getElementById('totalPrice');
+        const orderBtn = document.getElementById('orderBtn');
+
+        function updatePrice() {
+            const unitPrice = parseFloat(calcType.value);
+            const qty = Math.max(1, parseInt(calcQty.value) || 1);
+            const total = unitPrice * qty;
+            totalPrice.innerText = `${total.toLocaleString()} ₽`;
+            spawnPrintJob();
+        }
+
+        calcType.addEventListener('change', updatePrice);
+        calcQty.addEventListener('input', updatePrice);
+
+        document.getElementById('printDemoBtn').addEventListener('click', () => {
+            spawnPrintJob();
+        });
+
+        orderBtn.addEventListener('click', () => {
+            const selectedText = calcType.options[calcType.selectedIndex].text;
+            const qty = calcQty.value;
+            const total = totalPrice.innerText;
+            const msg = `Здравствуйте! Хочу сделать заказ в Копи центре:\n- Услуга: ${selectedText}\n- Количество: ${qty}\n- Стоимость: ~${total}\nАдрес: Шоссе в Лаврики, 59 к1`;
+            window.open(`https://wa.me/79117961402?text=${encodeURIComponent(msg)}`, '_blank');
+        });
+
+        // ==========================================
+        // АНИМАЦИЯ
+        // ==========================================
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            printerGroup.position.y = -0.5 + Math.sin(elapsedTime * 1.5) * 0.05;
+            signMesh.position.y = 2.4 + Math.sin(elapsedTime * 2) * 0.05;
+            scanBar.position.x = Math.sin(elapsedTime * 3) * 0.9;
+
+            for (let i = printedSheets.length - 1; i >= 0; i--) {
+                const sheetData = printedSheets[i];
+                sheetData.progress += sheetData.speed;
+                sheetData.mesh.position.z += 0.04;
+                sheetData.mesh.position.y -= 0.01;
+                sheetData.mesh.rotation.z += sheetData.rotSpeed;
+
+                if (sheetData.progress > 2) {
+                    scene.remove(sheetData.mesh);
+                    printedSheets.splice(i, 1);
+                }
+            }
+
+            particles.rotation.y = elapsedTime * 0.02;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
